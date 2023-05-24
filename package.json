@@ -20,7 +20,7 @@
     "ffmetadata": "^1.7.0",
     "ffmpeg-static": "^4.4.0",
     "tsd-jsdoc": "^2.5.0",
-    "ytdl-core": "^4.11.0"
+    "ytdl-core": "github:AlexisPerez445/node-ytdl-core"
   },
   "types": "lib/index.d.ts",
   "devDependencies": {
