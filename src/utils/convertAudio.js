@@ -1,11 +1,25 @@
 const ytdl = require("ytdl-core");
-const ffmpeg = require("ffmpeg-static");
-const ffmMT = require("ffmetadata");
+// const ffmpeg = require("ffmpeg-static");
+const { app } = require('electron');
 const path = require("path");
+// const isPackaged = app.isPackaged;
+// const appPath = isPackaged ? app.getAppPath() : process.cwd();
+let ffmpeg;
+if (app.isPackaged) {
+    ffmpeg = path.join(app.getAppPath().replace('app.asar', 'app.asar.unpacked'), 'node_modules', 'ffmpeg-static', 'ffmpeg.exe');
+} else {
+    ffmpeg = path.join(app.getAppPath(), 'node_modules', 'ffmpeg-static', 'ffmpeg.exe');
+}
+
+const ffmMT = require("ffmetadata");
 const cp = require("child_process")
 const getInfo = require("./getInfo")
 const parserTitles = require("./parserTitles");
 const { fileExist } = require("./existFile");
+
+
+
+
 
 ffmMT.setFfmpegPath(ffmpeg);
 
@@ -91,17 +105,33 @@ const convertAudio = async (options, onData, onClose) => {
                 if (onData) onData(percentage, { downloaded, totalSize: totalAudio }, id)
             })
         
-            ffmpegProcess.on("close", () => {
-                const metadata = {
-                    artist: info.author.name,
-                    title,
-                    album: info.author.name
-                }
-                ffmMT.write(pathname, metadata, (err) => {
-                    if (err) throw err;
-                    if (onClose) onClose(id)
-                });
-            })
+            ffmpegProcess.on("close",  (code, signal) => {
+                // const metadata = {
+                //     artist: info.author.name,
+                //     title,
+                //     album: info.author.name
+                // }
+                
+                // ffmMT.write(pathname, metadata, (err) => {
+                //     if (err){  
+                //         console.error('Error al escribir el archivo:', err);
+                //     } else {
+                //         if (onClose) {
+                //             console.log(`Proceso finalizado`);
+                //             onClose(id);
+                //         }
+                //     }
+                // });
+
+                if (onClose) onClose(id)
+
+                console.log(`Proceso hijo finalizado con código ${code} y señal ${signal}`);
+                stream.end();
+            });
+
+            ffmpegProcess.on('error', (error) => {
+                console.error('Error en el proceso hijo:', error);
+            });
         
             stream.pipe(ffmpegProcess.stdio[4])
         } else if (onClose) onClose(id)
